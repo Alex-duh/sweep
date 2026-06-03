@@ -327,12 +327,12 @@ def main():
 
     console = Console()
 
-    if not args.archive:
+    if not args.archive and not args.confirm:
         console.print("\n[bold yellow]DRY RUN[/bold yellow] — nothing will be changed. "
-                      "Pass [bold]--archive[/bold] to make real changes.\n")
+                      "Pass [bold]--confirm[/bold] to review then archive, or [bold]--archive[/bold] to archive immediately.\n")
 
-    if args.unsubscribe and not args.archive:
-        console.print("[yellow]Note: --unsubscribe has no effect without --archive.[/yellow]\n")
+    if args.unsubscribe and not args.archive and not args.confirm:
+        console.print("[yellow]Note: --unsubscribe has no effect without --archive or --confirm.[/yellow]\n")
 
     # Load whitelist and seen-IDs cache before touching Gmail.
     whitelist = load_whitelist()
