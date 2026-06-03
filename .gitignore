@@ -1,0 +1,18 @@
+# OAuth files — contain secrets, never commit these
+credentials.json
+token.json
+
+# API keys
+.env
+
+# Runtime data — contains your personal email metadata
+sweep_log.json
+seen_ids.txt
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store

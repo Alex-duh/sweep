@@ -1,0 +1,7 @@
+# Whitelist — senders that are never archived, regardless of classification.
+# One email address per line. Lines starting with # are comments.
+#
+noreply@commonapp.org
+#
+# examples:
+# noreply@commonapp.org   # Common App: status emails and application notifications
