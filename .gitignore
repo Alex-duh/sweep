@@ -1,3 +1,6 @@
+# Claude Code internal files
+.claude/
+
 # OAuth files — contain secrets, never commit these
 credentials.json
 token.json

@@ -1,4 +1,3 @@
-#Majority of the auth.py file was written by Claude to help me understand how to use Google OAuth and the Gmail API
 """
 auth.py — handles Google OAuth and returns a ready-to-use Gmail API service.
 

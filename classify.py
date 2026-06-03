@@ -19,7 +19,6 @@ load_dotenv()  # reads GROQ_API_KEY from .env into os.environ
 
 # ---------------------------------------------------------------------------
 # Phrase lists — edit these to tune the classifier without touching logic 
-# (Used AI to help generate these, but I reviewed and edited them all manually to ensure precision and relevance.)
 # ---------------------------------------------------------------------------
 
 # ANY of these in subject+body → almost certainly a personal email, keep it.
@@ -348,7 +347,6 @@ def classify(email: dict, my_name: str = "Alex") -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Test data created by Claude, reviewed and edited by me. Test data before using my real Gmail Inbox
 # Quick self-test — runs only when you do: python classify.py
 # No Gmail connection needed.
 # ---------------------------------------------------------------------------
