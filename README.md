@@ -140,7 +140,6 @@ Add sender addresses that should never be archived, one per line:
 
 ```
 # Lines starting with # are comments
-elise@ultimateivyleagueguide.com
 noreply@commonapp.org
 ```
 
