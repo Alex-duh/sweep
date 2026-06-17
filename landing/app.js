@@ -2,7 +2,7 @@
    SWEEP — app.js
    Three phases:
      1. Curtain canvas (spam terms, sweep to reveal)
-     2. Main page (form)
+     2. Main site (home / about / privacy tabs)
      3. Thank you page
 ============================================= */
 "use strict";
@@ -68,18 +68,23 @@ function buildTerms() {
   const count = 50;
   for (let i = 0; i < count; i++) {
     terms.push({
-      text:      TERMS[i % TERMS.length],
-      x:         randBetween(40, logW - 40),
-      y:         randBetween(50, logH - 50),
-      rotation:  randBetween(-40, 40) * (Math.PI / 180),
-      fontSize:  randBetween(11, 22),
-      opacity:   randBetween(0.25, 0.65),
-      baseOpacity: 0, // set after
-      state:     "still", // still | flying | faded
+      text:        TERMS[i % TERMS.length],
+      x:           randBetween(40, logW - 40),
+      y:           randBetween(50, logH - 50),
+      rotation:    randBetween(-40, 40) * (Math.PI / 180),
+      fontSize:    randBetween(18, 42),
+      opacity:     randBetween(0.35, 0.75),
+      baseOpacity: 0,
+      state:       "still", // still | flying | faded
       vx: 0, vy: 0,
       flyStart: 0,
     });
     terms[i].baseOpacity = terms[i].opacity;
+    // guarantee first 5 terms land inside the center zone so sweeping is always required
+    if (i < 5) {
+      terms[i].x = randBetween(logW / 2 - 140, logW / 2 + 140);
+      terms[i].y = randBetween(logH / 2 - 88,  logH / 2 + 88);
+    }
     // slow outward drift from canvas center
     const dx = terms[i].x - logW / 2;
     const dy = terms[i].y - logH / 2;
@@ -135,8 +140,8 @@ if (isMobile) {
 /* =============================================
    SWEEP LOGIC
 ============================================= */
-const SWEEP_RADIUS   = 65;
-const FADE_DURATION  = 350; // ms
+const SWEEP_RADIUS  = 65;
+const FADE_DURATION = 350; // ms
 
 function trySweeep(now) {
   if (!mouse.onCanvas) return; // no click required — hover sweeps
@@ -154,7 +159,7 @@ function startFlying(t, dx, dy, now) {
   t.flyStart = now;
   t.vx = dx * 1.2 + randBetween(-2, 2);
   t.vy = dy * 1.2 + randBetween(-2, 2);
-  const spd  = Math.hypot(t.vx, t.vy);
+  const spd = Math.hypot(t.vx, t.vy);
   if (spd < 2.5) {
     const angle = Math.random() * Math.PI * 2;
     t.vx += Math.cos(angle) * (2.5 - spd + 0.5);
@@ -164,10 +169,6 @@ function startFlying(t, dx, dy, now) {
 
 function markSwept(t) {
   t.state = "faded"; t.opacity = 0; sweptCount++;
-  if (sweptCount >= 35 && !revealTriggered) {
-    revealTriggered = true;
-    triggerAutoSweep();
-  }
 }
 
 function updateTerms(now) {
@@ -189,16 +190,33 @@ function updateTerms(now) {
   });
 }
 
+/* center-zone clear: if headline area has no terms, auto-reveal */
+function isCenterClear() {
+  const cx = logW / 2, cy = logH / 2;
+  const zoneW = 320, zoneH = 200;
+  return !terms.some(t =>
+    t.state === "still" &&
+    Math.abs(t.x - cx) < zoneW / 2 &&
+    Math.abs(t.y - cy) < zoneH / 2
+  );
+}
+
+function checkCenterClear() {
+  if (!revealTriggered && sweptCount > 0 && isCenterClear()) {
+    revealTriggered = true;
+    triggerAutoSweep();
+  }
+}
+
 function triggerAutoSweep() {
-  const cx = logW / 2;
-  const cy = logH / 2;
+  const cx  = logW / 2;
+  const cy  = logH / 2;
   const now = performance.now();
   terms.forEach(t => {
     if (t.state !== "still") return;
     const angle = Math.atan2(t.y - cy, t.x - cx);
     const spd   = randBetween(6, 10);
     startFlying(t, Math.cos(angle) * spd / 1.2, Math.sin(angle) * spd / 1.2, now);
-    // override to guaranteed outward speed
     t.vx = Math.cos(angle) * spd;
     t.vy = Math.sin(angle) * spd;
   });
@@ -207,11 +225,11 @@ function triggerAutoSweep() {
 
 function revealMainPage() {
   curtainActive = false;
-  curtainEl.style.transition = "opacity 0.6s ease";
-  curtainEl.style.opacity    = "0";
+  curtainEl.style.transition    = "opacity 0.6s ease";
+  curtainEl.style.opacity       = "0";
   curtainEl.style.pointerEvents = "none";
-  const mp = document.getElementById("main-page");
-  mp.style.pointerEvents = "auto";
+  const site = document.getElementById("site");
+  site.style.pointerEvents = "auto";
   document.body.style.overflow = "auto";
   setTimeout(() => { curtainEl.style.display = "none"; }, 700);
   initTypewriters();
@@ -220,8 +238,6 @@ function revealMainPage() {
 /* =============================================
    HINT PULSE
 ============================================= */
-let hintOpacity = 0.55;
-
 function drawHint(now) {
   const pulse = 0.55 + 0.45 * (0.5 + 0.5 * Math.sin((now / 1800) * Math.PI * 2));
   curtainCtx.save();
@@ -229,7 +245,7 @@ function drawHint(now) {
   curtainCtx.fillStyle    = `rgba(107, 140, 126, ${pulse.toFixed(3)})`;
   curtainCtx.textAlign    = "center";
   curtainCtx.textBaseline = "top";
-  curtainCtx.fillText("← drag to sweep away the spam →", logW / 2, 20);
+  curtainCtx.fillText("← move cursor to sweep away the spam →", logW / 2, 20);
   curtainCtx.restore();
 }
 
@@ -238,10 +254,8 @@ function drawHint(now) {
 ============================================= */
 function drawBroom(x, y) {
   curtainCtx.save();
-  // Handle
   curtainCtx.fillStyle = "#1C1917";
   curtainCtx.fillRect(x - 1, y - 22, 2, 22);
-  // Bristles trapezoid
   curtainCtx.beginPath();
   curtainCtx.moveTo(x - 2.5, y);
   curtainCtx.lineTo(x + 2.5, y);
@@ -263,7 +277,7 @@ function drawProgress() {
   const by     = logH - 24;
 
   curtainCtx.save();
-  curtainCtx.fillStyle = "rgba(212, 206, 190, 0.6)"; // track
+  curtainCtx.fillStyle = "rgba(212, 206, 190, 0.6)";
   curtainCtx.fillRect(bx, by, 120, 2);
   curtainCtx.fillStyle = "#6B8C7E";
   curtainCtx.fillRect(bx, by, filled, 2);
@@ -276,8 +290,8 @@ function drawProgress() {
 function drawCurtain(now) {
   curtainCtx.clearRect(0, 0, logW, logH);
 
-  // Linen background
-  curtainCtx.fillStyle = "rgba(242, 237, 227, 0.78)";
+  // Solid linen background — fully opaque curtain
+  curtainCtx.fillStyle = "#F2EDE3";
   curtainCtx.fillRect(0, 0, logW, logH);
 
   // Draw all terms
@@ -311,6 +325,7 @@ function loop(now) {
   if (curtainActive) {
     trySweeep(now);
     updateTerms(now);
+    checkCenterClear();
     drawCurtain(now);
   }
   requestAnimationFrame(loop);
@@ -321,14 +336,48 @@ function loop(now) {
 ============================================= */
 window.addEventListener("resize", () => {
   resizeCurtain();
-  // Remap term positions proportionally
   const newW = logW, newH = logH;
-  // (already updated by resizeCurtain)
   terms.forEach(t => {
     t.x = Math.max(20, Math.min(t.x, newW - 20));
     t.y = Math.max(20, Math.min(t.y, newH - 20));
   });
 });
+
+/* =============================================
+   TAB NAVIGATION
+============================================= */
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.toggle("hidden", p.id !== "page-" + name);
+  });
+  document.querySelectorAll(".nav-tab").forEach(t => {
+    t.classList.toggle("is-active", t.dataset.page === name);
+  });
+  const site = document.getElementById("site");
+  if (site) site.scrollTop = 0;
+}
+
+document.querySelectorAll("[data-page]").forEach(el => {
+  el.addEventListener("click", e => {
+    e.preventDefault();
+    showPage(el.dataset.page);
+  });
+});
+
+const tyHomeBtn = document.getElementById("tyHomeBtn");
+if (tyHomeBtn) {
+  tyHomeBtn.addEventListener("click", () => {
+    const ty = document.getElementById("thank-you");
+    ty.style.transition = "opacity 0.3s ease";
+    ty.style.opacity    = "0";
+    setTimeout(() => {
+      ty.style.display    = "none";
+      ty.style.opacity    = "1";
+      document.getElementById("site").style.pointerEvents = "auto";
+    }, 300);
+    showPage("home");
+  });
+}
 
 /* =============================================
    PHASE 2 — FORM HANDLER
@@ -377,17 +426,14 @@ signupForm.addEventListener("submit", async (e) => {
    EXPLOSION CANVAS
 ============================================= */
 function triggerExplosion() {
-  // Hide form
   signupForm.style.display = "none";
   if (finePrint) finePrint.style.display = "none";
 
-  // Get button position for origin
-  const mainPage = document.getElementById("main-page");
-  const btnRect  = submitBtn.getBoundingClientRect();
-  const originX  = btnRect.left + btnRect.width  / 2;
-  const originY  = btnRect.top  + btnRect.height / 2;
+  const site    = document.getElementById("site");
+  const btnRect = submitBtn.getBoundingClientRect();
+  const originX = btnRect.left + btnRect.width  / 2;
+  const originY = btnRect.top  + btnRect.height / 2;
 
-  // Create explosion canvas
   const ec  = document.createElement("canvas");
   ec.id     = "explosionCanvas";
   const dpr = window.devicePixelRatio || 1;
@@ -404,26 +450,25 @@ function triggerExplosion() {
   const ectx = ec.getContext("2d");
   ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // Spawn particles
   const particles = [];
   for (let i = 0; i < 50; i++) {
     const angle = Math.random() * Math.PI * 2;
     const spd   = randBetween(3, 9);
     particles.push({
-      text:          randFrom(TERMS),
-      x:             originX,
-      y:             originY,
-      vx:            Math.cos(angle) * spd,
-      vy:            Math.sin(angle) * spd,
-      rotation:      Math.random() * Math.PI * 2,
-      rotSpeed:      randBetween(-3, 3) * (Math.PI / 180),
-      fontSize:      randBetween(13, 24),
-      opacity:       1.0,
+      text:      randFrom(TERMS),
+      x:         originX,
+      y:         originY,
+      vx:        Math.cos(angle) * spd,
+      vy:        Math.sin(angle) * spd,
+      rotation:  Math.random() * Math.PI * 2,
+      rotSpeed:  randBetween(-3, 3) * (Math.PI / 180),
+      fontSize:  randBetween(13, 24),
+      opacity:   1.0,
     });
   }
 
   const startTime = performance.now();
-  const DECAY     = 900; // ms full decay
+  const DECAY     = 900;
 
   function animateExplosion(now) {
     const elapsed = now - startTime;
@@ -447,20 +492,18 @@ function triggerExplosion() {
       ectx.restore();
     });
 
-    // At 650ms: fade main page
-    if (elapsed >= 650 && !mainPage._fadingOut) {
-      mainPage._fadingOut = true;
-      mainPage.style.transition = "opacity 0.4s ease";
-      mainPage.style.opacity    = "0";
+    if (elapsed >= 650 && !site._fadingOut) {
+      site._fadingOut = true;
+      site.style.transition = "opacity 0.4s ease";
+      site.style.opacity    = "0";
     }
 
-    // At 1050ms: show thank-you
-    if (elapsed >= 1050 && !mainPage._done) {
-      mainPage._done = true;
-      mainPage.style.display    = "none";
+    if (elapsed >= 1050 && !site._done) {
+      site._done = true;
+      site.style.display = "none";
       ec.remove();
       showThankYou();
-      return; // stop loop
+      return;
     }
 
     requestAnimationFrame(animateExplosion);
@@ -474,10 +517,9 @@ function triggerExplosion() {
 ============================================= */
 function showThankYou() {
   const ty = document.getElementById("thank-you");
-  ty.style.display = "flex";
+  ty.style.display    = "flex";
   ty.style.alignItems = "center";
   ty.style.justifyContent = "center";
-  // fade in
   ty.style.opacity    = "0";
   ty.style.transition = "opacity 0.3s ease";
   requestAnimationFrame(() => {
@@ -520,15 +562,14 @@ class TypewriterPhrase {
   }
 
   _placeRandom() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vw  = window.innerWidth;
+    const vh  = window.innerHeight;
     const pad = 60;
-    // pick a zone away from the center form area
     const zones = [
-      { left: pad, top: pad + 70, maxW: vw * 0.28, maxH: vh * 0.35 },
-      { left: vw * 0.68, top: pad + 70, maxW: vw * 0.28, maxH: vh * 0.35 },
-      { left: pad, top: vh * 0.62, maxW: vw * 0.28, maxH: vh * 0.28 },
-      { left: vw * 0.68, top: vh * 0.62, maxW: vw * 0.28, maxH: vh * 0.28 },
+      { left: pad,         top: pad + 70,    maxW: vw * 0.28, maxH: vh * 0.35 },
+      { left: vw * 0.68,   top: pad + 70,    maxW: vw * 0.28, maxH: vh * 0.35 },
+      { left: pad,         top: vh * 0.62,   maxW: vw * 0.28, maxH: vh * 0.28 },
+      { left: vw * 0.68,   top: vh * 0.62,   maxW: vw * 0.28, maxH: vh * 0.28 },
     ];
     const z = zones[Math.floor(Math.random() * zones.length)];
     this.el.style.left   = (z.left + Math.random() * z.maxW) + "px";
@@ -580,10 +621,10 @@ let twAnimating  = false;
 function initTypewriters() {
   if (twAnimating) return;
   twAnimating = true;
-  const parent = document.getElementById("main-page");
+  const parent = document.getElementById("site");
   for (let i = 0; i < 4; i++) {
     const tw = new TypewriterPhrase(parent);
-    tw.waitUntil += i * 900; // stagger start times
+    tw.waitUntil += i * 900;
     typewriters.push(tw);
   }
   function twLoop(now) {

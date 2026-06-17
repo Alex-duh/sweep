@@ -17,8 +17,8 @@
   <!-- Mobile tap-to-reveal button (hidden on desktop) -->
   <button id="tapReveal">Tap to reveal Sweep</button>
 
-  <!-- PHASE 2: MAIN PAGE -->
-  <div id="main-page">
+  <!-- PHASE 2: MAIN SITE -->
+  <div id="site">
 
     <!-- Gradient mesh blobs -->
     <div id="gradient-mesh" aria-hidden="true">
@@ -27,38 +27,103 @@
       <div class="blob blob-3"></div>
     </div>
 
+    <!-- NAV -->
     <nav id="main-nav">
-      <div class="nav-left">
-        <img src="logo.png" width="56" height="56" alt="Sweep logo" style="image-rendering:pixelated;" />
+      <a class="nav-logo" href="#" data-page="home">
+        <img src="logo.png" width="48" height="48" alt="Sweep" style="image-rendering:pixelated;" />
         <span class="nav-wordmark">SWEEP</span>
+      </a>
+      <div class="nav-tabs">
+        <a class="nav-tab is-active" href="#" data-page="home">Home</a>
+        <a class="nav-tab" href="#" data-page="about">About</a>
+        <a class="nav-tab" href="#" data-page="privacy">Privacy</a>
       </div>
     </nav>
 
-    <main class="hero-content">
-      <span class="badge">● Early access — 100 spots</span>
+    <!-- HOME PAGE -->
+    <section id="page-home" class="page">
+      <div class="page-inner">
+        <span class="badge">● Early access — 100 spots</span>
+        <h1 class="headline">Your inbox,<br>finally clean.</h1>
+        <p class="subheadline">
+          Sign up to get early demo access. Sweep automatically archives college recruitment spam — archive-only, nothing deleted. The first 100 people get hands-on access before the Chrome extension launches publicly.
+        </p>
+        <form id="signupForm" novalidate>
+          <div class="form-group">
+            <input type="text" id="nameInput" name="name" placeholder="Your name" autocomplete="name" required />
+          </div>
+          <div class="form-group">
+            <input type="email" id="emailInput" name="email" placeholder="your@email.com" autocomplete="email" required />
+          </div>
+          <button type="submit" id="submitBtn">Get early access →</button>
+          <p id="errorMsg" class="error-msg" aria-live="polite"></p>
+        </form>
+        <p class="fine-print">Chrome extension launching publicly in coming weeks — this demo gives you first access.</p>
+      </div>
+    </section>
 
-      <h1 class="headline">Your inbox,<br>finally clean.</h1>
+    <!-- ABOUT PAGE -->
+    <section id="page-about" class="page hidden">
+      <div class="page-inner page-inner--narrow">
+        <h2 class="page-title">About Sweep</h2>
+        <p class="about-body">
+          You signed up for College Board emails thinking — <em>what if Harvard actually reaches out?</em> What you got instead was tens of emails per day from schools you've never heard of, in states you've never visited, all insisting you're a "perfect fit." Every single day.
+        </p>
+        <p class="about-body">
+          Sweep fixes that. It scans your inbox, identifies college recruitment spam using a combination of rule-based pattern matching and AI, then archives it — quietly, automatically, and reversibly.
+        </p>
+        <h3 class="about-heading">How it works</h3>
+        <ul class="about-list">
+          <li>Connects to Gmail via OAuth — you grant access, you can revoke anytime in your Google account settings</li>
+          <li>Scans for college recruitment signals: sender domain, subject line, unsubscribe headers, and known spam phrases</li>
+          <li>Ambiguous cases go to an AI classifier for a second opinion</li>
+          <li>Archive-only — emails move out of Inbox into All Mail, never permanently deleted</li>
+          <li>Anything misclassified can be moved back in seconds</li>
+        </ul>
+        <h3 class="about-heading">What Sweep is not</h3>
+        <ul class="about-list">
+          <li>Not a bulk delete tool — nothing is ever permanently removed</li>
+          <li>Not a general spam filter — it targets college recruitment specifically</li>
+          <li>Not reading your emails to sell you ads or build a profile</li>
+        </ul>
+      </div>
+    </section>
 
-      <p class="subheadline">
-        You signed up for College Board thinking — <em>what if Harvard actually reaches out?</em>
-        What you got was three emails a day from schools you've never heard of, in states you've never visited,
-        all saying you're a "perfect fit." Sweep archives it automatically.
-        Archive-only — if anything's wrong, it's still in All Mail.
-      </p>
+    <!-- PRIVACY PAGE -->
+    <section id="page-privacy" class="page hidden">
+      <div class="page-inner page-inner--narrow">
+        <h2 class="page-title">Privacy &amp; Terms</h2>
+        <p class="about-body privacy-date">Last updated: June 2026</p>
 
-      <form id="signupForm" novalidate>
-        <div class="form-group">
-          <input type="text" id="nameInput" name="name" placeholder="Your name" autocomplete="name" required />
-        </div>
-        <div class="form-group">
-          <input type="email" id="emailInput" name="email" placeholder="your@email.com" autocomplete="email" required />
-        </div>
-        <button type="submit" id="submitBtn">Get early access →</button>
-        <p id="errorMsg" class="error-msg" aria-live="polite"></p>
-      </form>
+        <h3 class="about-heading">What we collect</h3>
+        <p class="about-body">For the waitlist: your name and email address only. Stored securely, used only to contact you about demo access. Never shared or sold.</p>
 
-      <p class="fine-print">Chrome extension launching publicly in coming weeks — this demo gives you first access.</p>
-    </main>
+        <h3 class="about-heading">Gmail access</h3>
+        <p class="about-body">Sweep requests the <code>gmail.modify</code> scope, which allows reading emails and modifying labels. We use this solely to: read message metadata (sender, subject, short snippet) for classification, and remove the INBOX label to archive. We never read or store full email bodies.</p>
+
+        <h3 class="about-heading">What we never do</h3>
+        <ul class="about-list">
+          <li>Never permanently delete any email</li>
+          <li>Never sell or share your data with third parties</li>
+          <li>Never store email content on our servers</li>
+          <li>Never send emails on your behalf</li>
+          <li>Never access emails outside the classification and archiving flow</li>
+        </ul>
+
+        <h3 class="about-heading demo-section-heading">First 100 Demo Users — Specific Terms</h3>
+        <p class="about-body">The early demo is a closed test with up to 100 manually approved users. By participating:</p>
+        <ul class="about-list">
+          <li><strong>OAuth tokens</strong> are managed locally by the Chrome extension and your browser. They never touch our servers.</li>
+          <li><strong>Classification requests</strong> send only the sender address, subject line, and a short body snippet (≤200 characters) to our backend for AI processing. These are not logged or stored after the API response.</li>
+          <li><strong>No email content</strong> beyond the snippet is ever transmitted. The snippet is used only when the rule-based classifier cannot make a decision — roughly 15–20% of emails.</li>
+          <li><strong>Signup data</strong> (name + email) is stored in our database solely to manage access and send demo instructions. You can request deletion at any time by emailing us.</li>
+          <li>When the public Chrome extension launches, stored signup data will be deleted unless you opt into the public product.</li>
+        </ul>
+
+        <h3 class="about-heading">Contact</h3>
+        <p class="about-body">Questions or deletion requests: <a href="mailto:da1.alexdu@gmail.com" class="privacy-link">da1.alexdu@gmail.com</a></p>
+      </div>
+    </section>
 
     <footer id="main-footer">
       <p>© 2026 Sweep — archive only, never deletes</p>
@@ -69,7 +134,7 @@
   <!-- PHASE 3: THANK YOU -->
   <div id="thank-you">
     <div class="ty-content">
-      <img src="logo.png" width="80" height="80" alt="Sweep" style="image-rendering:pixelated;" />
+      <img src="logo.png" width="96" height="96" alt="Sweep" style="image-rendering:pixelated;" />
       <h2 class="ty-heading">You're on the list.</h2>
       <p class="ty-body">We'll reach out soon with instructions for the early demo.</p>
       <hr class="ty-divider" />
@@ -83,7 +148,7 @@
           <p>Launching publicly in coming weeks as a Chrome extension.</p>
         </div>
       </div>
-      <button class="ty-home-btn" onclick="location.reload()">← Back to home</button>
+      <button class="ty-home-btn" id="tyHomeBtn">← Back to home</button>
     </div>
   </div>
 
