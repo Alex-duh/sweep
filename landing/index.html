@@ -20,7 +20,12 @@
   <!-- PHASE 2: MAIN PAGE -->
   <div id="main-page">
 
-    <!-- Grain overlay via ::before in CSS -->
+    <!-- Gradient mesh blobs -->
+    <div id="gradient-mesh" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
 
     <nav id="main-nav">
       <div class="nav-left">
@@ -35,7 +40,10 @@
       <h1 class="headline">Your inbox,<br>finally clean.</h1>
 
       <p class="subheadline">
-        Sweep quietly archives college recruitment spam. Archive-only — nothing is ever deleted.
+        You signed up for College Board thinking — <em>what if Harvard actually reaches out?</em>
+        What you got was three emails a day from schools you've never heard of, in states you've never visited,
+        all saying you're a "perfect fit." Sweep archives it automatically.
+        Archive-only — if anything's wrong, it's still in All Mail.
       </p>
 
       <form id="signupForm" novalidate>
@@ -61,9 +69,9 @@
   <!-- PHASE 3: THANK YOU -->
   <div id="thank-you">
     <div class="ty-content">
-      <img src="logo.png" width="56" height="56" alt="Sweep" style="image-rendering:pixelated;" />
+      <img src="logo.png" width="80" height="80" alt="Sweep" style="image-rendering:pixelated;" />
       <h2 class="ty-heading">You're on the list.</h2>
-      <p class="ty-body">You'll receive instructions for the early demo soon.</p>
+      <p class="ty-body">We'll reach out soon with instructions for the early demo.</p>
       <hr class="ty-divider" />
       <div class="ty-blocks">
         <div class="ty-block">
@@ -75,7 +83,7 @@
           <p>Launching publicly in coming weeks as a Chrome extension.</p>
         </div>
       </div>
-      <p class="ty-contact">Questions? <a href="mailto:da1.alexdu@gmail.com">da1.alexdu@gmail.com</a></p>
+      <button class="ty-home-btn" onclick="location.reload()">← Back to home</button>
     </div>
   </div>
 

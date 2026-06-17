@@ -80,6 +80,13 @@ function buildTerms() {
       flyStart: 0,
     });
     terms[i].baseOpacity = terms[i].opacity;
+    // slow outward drift from canvas center
+    const dx = terms[i].x - logW / 2;
+    const dy = terms[i].y - logH / 2;
+    const dist = Math.hypot(dx, dy) || 1;
+    const speed = randBetween(0.06, 0.16);
+    terms[i].driftVx = (dx / dist) * speed;
+    terms[i].driftVy = (dy / dist) * speed;
   }
 }
 
@@ -132,7 +139,7 @@ const SWEEP_RADIUS   = 65;
 const FADE_DURATION  = 350; // ms
 
 function trySweeep(now) {
-  if (!mouse.down || !mouse.onCanvas) return;
+  if (!mouse.onCanvas) return; // no click required — hover sweeps
   terms.forEach(t => {
     if (t.state !== "still") return;
     const dist = Math.hypot(mouse.x - t.x, mouse.y - t.y);
@@ -155,6 +162,14 @@ function startFlying(t, dx, dy, now) {
   }
 }
 
+function markSwept(t) {
+  t.state = "faded"; t.opacity = 0; sweptCount++;
+  if (sweptCount >= 35 && !revealTriggered) {
+    revealTriggered = true;
+    triggerAutoSweep();
+  }
+}
+
 function updateTerms(now) {
   terms.forEach(t => {
     if (t.state === "flying") {
@@ -163,14 +178,12 @@ function updateTerms(now) {
       const elapsed = now - t.flyStart;
       const prog    = Math.min(elapsed / FADE_DURATION, 1);
       t.opacity = t.baseOpacity * (1 - prog);
-      if (prog >= 1) {
-        t.state   = "faded";
-        t.opacity = 0;
-        sweptCount++;
-        if (sweptCount >= 35 && !revealTriggered) {
-          revealTriggered = true;
-          triggerAutoSweep();
-        }
+      if (prog >= 1) markSwept(t);
+    } else if (t.state === "still") {
+      t.x += t.driftVx;
+      t.y += t.driftVy;
+      if (t.x < -80 || t.x > logW + 80 || t.y < -80 || t.y > logH + 80) {
+        markSwept(t);
       }
     }
   });
@@ -198,10 +211,10 @@ function revealMainPage() {
   curtainEl.style.opacity    = "0";
   curtainEl.style.pointerEvents = "none";
   const mp = document.getElementById("main-page");
-  mp.style.opacity       = "1";
   mp.style.pointerEvents = "auto";
   document.body.style.overflow = "auto";
   setTimeout(() => { curtainEl.style.display = "none"; }, 700);
+  initTypewriters();
 }
 
 /* =============================================
@@ -264,7 +277,7 @@ function drawCurtain(now) {
   curtainCtx.clearRect(0, 0, logW, logH);
 
   // Linen background
-  curtainCtx.fillStyle = "#F2EDE3";
+  curtainCtx.fillStyle = "rgba(242, 237, 227, 0.78)";
   curtainCtx.fillRect(0, 0, logW, logH);
 
   // Draw all terms
@@ -470,6 +483,114 @@ function showThankYou() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => { ty.style.opacity = "1"; });
   });
+}
+
+/* =============================================
+   TYPEWRITER BACKDROP
+============================================= */
+const TW_PHRASES = [
+  "You might get into Harvard...",
+  "We think you'd be a great fit.",
+  "Students like you thrive here.",
+  "Don't miss our Open House!",
+  "Visit Our Campus this fall.",
+  "Your future starts here.",
+  "Discover your potential.",
+  "We saw your College Board profile.",
+  "Apply now — spaces are limited.",
+  "Be transformed at our campus.",
+  "Find your fit. Apply today.",
+  "Come see what we have to offer.",
+  "We'd love to have you here.",
+  "Schedule a campus tour today!",
+  "Join our community of learners.",
+];
+
+class TypewriterPhrase {
+  constructor(parent) {
+    this.parent = parent;
+    this.el = document.createElement("div");
+    this.el.className = "tw-phrase";
+    parent.appendChild(this.el);
+    this.state = "idle";
+    this.charIndex = 0;
+    this.lastTick = 0;
+    this.waitUntil = performance.now() + Math.random() * 3000;
+    this._placeRandom();
+  }
+
+  _placeRandom() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const pad = 60;
+    // pick a zone away from the center form area
+    const zones = [
+      { left: pad, top: pad + 70, maxW: vw * 0.28, maxH: vh * 0.35 },
+      { left: vw * 0.68, top: pad + 70, maxW: vw * 0.28, maxH: vh * 0.35 },
+      { left: pad, top: vh * 0.62, maxW: vw * 0.28, maxH: vh * 0.28 },
+      { left: vw * 0.68, top: vh * 0.62, maxW: vw * 0.28, maxH: vh * 0.28 },
+    ];
+    const z = zones[Math.floor(Math.random() * zones.length)];
+    this.el.style.left   = (z.left + Math.random() * z.maxW) + "px";
+    this.el.style.top    = (z.top  + Math.random() * z.maxH) + "px";
+    this.el.style.right  = "auto";
+    this.el.style.bottom = "auto";
+  }
+
+  update(now) {
+    if (this.state === "idle") {
+      if (now >= this.waitUntil) {
+        this.text = "“" + TW_PHRASES[Math.floor(Math.random() * TW_PHRASES.length)] + "”";
+        this.charIndex = 0;
+        this.state = "typing";
+        this.lastTick = now;
+        this._placeRandom();
+        this.el.textContent = "";
+      }
+    } else if (this.state === "typing") {
+      if (now - this.lastTick >= 52) {
+        this.charIndex++;
+        this.el.textContent = this.text.slice(0, this.charIndex);
+        this.lastTick = now;
+        if (this.charIndex >= this.text.length) {
+          this.state = "pausing";
+          this.pauseUntil = now + 1600 + Math.random() * 800;
+        }
+      }
+    } else if (this.state === "pausing") {
+      if (now >= this.pauseUntil) { this.state = "deleting"; this.lastTick = now; }
+    } else if (this.state === "deleting") {
+      if (now - this.lastTick >= 32) {
+        this.charIndex--;
+        this.el.textContent = this.text.slice(0, this.charIndex);
+        this.lastTick = now;
+        if (this.charIndex <= 0) {
+          this.el.textContent = "";
+          this.state = "idle";
+          this.waitUntil = now + 800 + Math.random() * 2000;
+        }
+      }
+    }
+  }
+}
+
+let typewriters = [];
+let twAnimating  = false;
+
+function initTypewriters() {
+  if (twAnimating) return;
+  twAnimating = true;
+  const parent = document.getElementById("main-page");
+  for (let i = 0; i < 4; i++) {
+    const tw = new TypewriterPhrase(parent);
+    tw.waitUntil += i * 900; // stagger start times
+    typewriters.push(tw);
+  }
+  function twLoop(now) {
+    typewriters.forEach(tw => tw.update(now));
+    requestAnimationFrame(twLoop);
+  }
+  requestAnimationFrame(twLoop);
 }
 
 /* =============================================
