@@ -6,75 +6,78 @@
   <title>Sweep — Clean your inbox</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <span class="nav-wordmark">Sweep</span>
-    <img src="logo.png" width="28" height="28" alt="Sweep" class="nav-logo" />
-  </nav>
+  <!-- PHASE 1: SPAM CURTAIN -->
+  <canvas id="curtain"></canvas>
 
-  <!-- HERO -->
-  <section class="hero">
+  <!-- Mobile tap-to-reveal button (hidden on desktop) -->
+  <button id="tapReveal">Tap to reveal Sweep</button>
 
-    <!-- LEFT: content -->
-    <div class="hero-left">
-      <span class="label-early-access">Early Access</span>
+  <!-- PHASE 2: MAIN PAGE -->
+  <div id="main-page">
+
+    <!-- Grain overlay via ::before in CSS -->
+
+    <nav id="main-nav">
+      <div class="nav-left">
+        <img src="logo.png" width="56" height="56" alt="Sweep logo" style="image-rendering:pixelated;" />
+        <span class="nav-wordmark">SWEEP</span>
+      </div>
+    </nav>
+
+    <main class="hero-content">
+      <span class="badge">● Early access — 100 spots</span>
 
       <h1 class="headline">Your inbox,<br>finally clean.</h1>
 
       <p class="subheadline">
-        Sweep finds and archives college recruitment spam automatically.
-        Archive-only — nothing is ever deleted.
+        Sweep quietly archives college recruitment spam. Archive-only — nothing is ever deleted.
       </p>
 
-      <!-- FORM -->
       <form id="signupForm" novalidate>
         <div class="form-group">
-          <input
-            type="text"
-            id="nameInput"
-            name="name"
-            placeholder="Your name"
-            autocomplete="name"
-            required
-          />
+          <input type="text" id="nameInput" name="name" placeholder="Your name" autocomplete="name" required />
         </div>
         <div class="form-group">
-          <input
-            type="email"
-            id="emailInput"
-            name="email"
-            placeholder="your@email.com"
-            autocomplete="email"
-            required
-          />
+          <input type="email" id="emailInput" name="email" placeholder="your@email.com" autocomplete="email" required />
         </div>
         <button type="submit" id="submitBtn">Get early access →</button>
         <p id="errorMsg" class="error-msg" aria-live="polite"></p>
       </form>
 
-      <div id="successMsg" class="success-msg" aria-live="polite">
-        You're on the list.
+      <p class="fine-print">Chrome extension launching publicly in coming weeks — this demo gives you first access.</p>
+    </main>
+
+    <footer id="main-footer">
+      <p>© 2026 Sweep — archive only, never deletes</p>
+    </footer>
+
+  </div>
+
+  <!-- PHASE 3: THANK YOU -->
+  <div id="thank-you">
+    <div class="ty-content">
+      <img src="logo.png" width="56" height="56" alt="Sweep" style="image-rendering:pixelated;" />
+      <h2 class="ty-heading">You're on the list.</h2>
+      <p class="ty-body">You'll receive instructions for the early demo soon.</p>
+      <hr class="ty-divider" />
+      <div class="ty-blocks">
+        <div class="ty-block">
+          <strong>First 100 only</strong>
+          <p>Spots are limited for the early demo — after that, Sweep goes public.</p>
+        </div>
+        <div class="ty-block">
+          <strong>Chrome Extension</strong>
+          <p>Launching publicly in coming weeks as a Chrome extension.</p>
+        </div>
       </div>
-
-      <p class="fine-print">No spam. Unsubscribe anytime.</p>
+      <p class="ty-contact">Questions? <a href="mailto:da1.alexdu@gmail.com">da1.alexdu@gmail.com</a></p>
     </div>
-
-    <!-- RIGHT: canvas -->
-    <div class="hero-right" id="canvasWrap">
-      <canvas id="sweepCanvas"></canvas>
-    </div>
-
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>&copy; 2026 Sweep &mdash; archive-only, never deletes</p>
-  </footer>
+  </div>
 
   <script src="app.js"></script>
 </body>

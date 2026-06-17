@@ -24,16 +24,17 @@ load_dotenv()  # reads GROQ_API_KEY from .env into os.environ
 # ANY of these in subject+body → almost certainly a personal email, keep it.
 # Phrases are intentionally specific — they only appear when an application
 # already exists, not in CTAs encouraging you to start one.
-KEEP_PHRASES = [ 
+KEEP_PHRASES = [
     "we received your application",   # application already submitted
     "your application has",           # "has been reviewed / received / accepted"
     "congratulations",                # acceptances, awards
-    "your enrollment",                # post-acceptance follow-up
     "admission decision",             # a decision is being communicated
-    "your admission",                 # "your admission to..."
     "enrollment deposit",             # post-acceptance action
     # Removed "your application" (too broad — fires on "start your application")
     # Removed "next steps" (too broad — spam says "next steps to apply")
+    # Removed "your enrollment" — fires on "explore your enrollment options" in spam
+    # Removed "your admission" — fires on "start your admission journey" in spam
+    # "admission decision" and "enrollment deposit" cover the real post-acceptance cases
 ]
 
 # ANY of these in subject+body → almost certainly mass college-recruitment spam.
@@ -190,6 +191,18 @@ def is_definite_recruitment(email: dict) -> bool:
     apply_now_counts  = has_apply_now and college_context
 
     has_any_cta = has_strong_cta or apply_now_counts
+
+    # Admissions-role sender + unsubscribe = bulk outreach, full stop.
+    # Words like "admissions", "admission", "enroll" in a sender address
+    # identify the sender as a college recruitment office. Personal emails and
+    # post-application emails from those same offices are caught by Tier 1 first,
+    # so this rule never fires on a real acceptance or decision email.
+    is_admissions_sender = any(
+        word in sender
+        for word in ["admissions", "admission", "undergraduateadmissions", "enroll"]
+    )
+    if is_admissions_sender and has_unsubscribe:
+        return True
 
     # Marketing platform sender alone is definitive — these only send college blasts.
     if is_spam_sender:

@@ -1,14 +1,14 @@
-/* -----------------------------------------------
-   SWEEP LANDING PAGE — style.css
+/* =============================================
+   SWEEP — style.css
    Palette:
-     #F2EDE3  warm linen (bg)
-     #E8E2D5  card/canvas bg
-     #1C1917  warm charcoal (primary text)
+     #F2EDE3  linen (bg)
+     #E8E2D5  card
+     #1C1917  charcoal (primary text)
      #6B6560  secondary text
-     #6B8C7E  sage green accent
+     #6B8C7E  sage accent
      #4E7267  sage hover
-     #D4CEBE  border/divider
-   ----------------------------------------------- */
+     #D4CEBE  border
+============================================= */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -17,108 +17,156 @@
 }
 
 html, body {
+  width: 100%;
   height: 100%;
-}
-
-body {
-  background-color: #F2EDE3;
-  color: #1C1917;
+  background: #F2EDE3;
   font-family: "Inter", sans-serif;
-  font-weight: 400;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow: hidden; /* curtain phase fills viewport */
 }
 
-/* -----------------------------------------------
-   NAV
------------------------------------------------ */
-nav {
+/* =============================================
+   PHASE 1 — CURTAIN CANVAS
+============================================= */
+
+#curtain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  transition: opacity 0.6s ease;
+  cursor: none;
+}
+
+#tapReveal {
+  display: none; /* shown via JS on mobile */
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 510;
+  background: #6B8C7E;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 28px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+#tapReveal:active {
+  background: #4E7267;
+}
+
+/* =============================================
+   PHASE 2 — MAIN PAGE
+============================================= */
+
+#main-page {
+  position: fixed;
+  inset: 0;
+  background: #F2EDE3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+/* Grain texture overlay */
+#main-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.048;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* NAV */
+#main-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  height: 56px;
-  background-color: #F2EDE3;
+  padding: 0 48px;
+  background: #F2EDE3;
   border-bottom: 1px solid #D4CEBE;
+  z-index: 200;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .nav-wordmark {
   font-family: "Playfair Display", serif;
-  font-weight: 400;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 26px;
   color: #1C1917;
   letter-spacing: -0.01em;
 }
 
-.nav-logo {
-  display: block;
-  /* placeholder styling — will show real pixel art when dropped in */
-  image-rendering: pixelated;
-}
-
-/* -----------------------------------------------
-   HERO
------------------------------------------------ */
-.hero {
-  display: flex;
-  flex-direction: row;
+/* HERO CONTENT */
+.hero-content {
   min-height: 100vh;
-  padding-top: 56px; /* offset fixed nav */
-}
-
-/* LEFT — content */
-.hero-left {
-  width: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 64px 56px 64px 72px;
+  align-items: flex-start;
+  padding: 120px 0 80px;
+  max-width: 520px;
+  margin: 0 auto;
+  gap: 0;
 }
 
-.label-early-access {
-  display: block;
+.badge {
+  display: inline-block;
+  background: #6B8C7E;
+  color: #fff;
   font-family: "Inter", sans-serif;
   font-weight: 500;
-  font-size: 11px;
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6B8C7E;
-  margin-bottom: 20px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  margin-bottom: 24px;
 }
 
 .headline {
   font-family: "Playfair Display", serif;
   font-weight: 700;
-  font-size: 64px;
-  line-height: 1.1;
+  font-size: 66px;
+  line-height: 1.05;
   color: #1C1917;
   margin-bottom: 24px;
 }
 
 .subheadline {
-  font-family: "Inter", sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: #6B6560;
-  max-width: 400px;
+  max-width: 440px;
   margin-bottom: 40px;
 }
 
-/* -----------------------------------------------
-   FORM
------------------------------------------------ */
+/* FORM */
 #signupForm {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  max-width: 360px;
   width: 100%;
+  max-width: 400px;
 }
 
 .form-group {
@@ -135,20 +183,18 @@ nav {
   font-family: "Inter", sans-serif;
   font-size: 15px;
   color: #1C1917;
-  padding: 10px 0;
-  transition: border-color 0.15s ease;
-  border-radius: 0; /* sharp */
+  padding: 11px 0;
+  border-radius: 0;
   -webkit-appearance: none;
   appearance: none;
+  transition: border-color 0.15s ease;
 }
 
-#signupForm input[type="text"]::placeholder,
-#signupForm input[type="email"]::placeholder {
+#signupForm input::placeholder {
   color: #6B6560;
 }
 
-#signupForm input[type="text"]:focus,
-#signupForm input[type="email"]:focus {
+#signupForm input:focus {
   border-bottom-color: #6B8C7E;
 }
 
@@ -156,127 +202,204 @@ nav {
   width: 100%;
   margin-top: 8px;
   padding: 14px 24px;
-  background-color: #6B8C7E;
-  color: #ffffff;
+  background: #6B8C7E;
+  color: #fff;
   font-family: "Inter", sans-serif;
   font-weight: 500;
   font-size: 14px;
   border: none;
-  border-radius: 0; /* sharp corners */
+  border-radius: 0;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background 0.15s ease;
   -webkit-appearance: none;
   appearance: none;
-  text-align: center;
 }
 
-#submitBtn:hover {
-  background-color: #4E7267;
-}
+#submitBtn:hover { background: #4E7267; }
+#submitBtn:active { background: #3d5c52; }
+#submitBtn:disabled { opacity: 0.6; cursor: default; }
 
-#submitBtn:active {
-  background-color: #3d5c52;
-}
-
-/* Error message */
 .error-msg {
   font-size: 13px;
   color: #c0392b;
   margin-top: 10px;
   min-height: 18px;
-  font-family: "Inter", sans-serif;
 }
 
-/* Success message — hidden until JS reveals it */
-.success-msg {
-  display: none;
-  font-family: "Playfair Display", serif;
-  font-style: italic;
-  font-size: 28px;
-  color: #6B8C7E;
-  text-align: center;
-  max-width: 360px;
-  padding: 20px 0;
-}
-
-/* Fine print below form */
 .fine-print {
   font-size: 12px;
   font-style: italic;
   color: #6B6560;
   margin-top: 16px;
-  font-family: "Inter", sans-serif;
+  max-width: 400px;
+  line-height: 1.5;
 }
 
-/* RIGHT — canvas */
-.hero-right {
-  width: 50%;
-  position: relative;
-  background-color: #E8E2D5;
-  border-left: 1px solid #D4CEBE;
-  /* canvas will fill this container */
-  overflow: hidden;
-}
-
-#sweepCanvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* -----------------------------------------------
-   FOOTER
------------------------------------------------ */
-footer {
+/* FOOTER */
+#main-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   text-align: center;
-  padding: 24px 40px;
-  background-color: #F2EDE3;
+  padding: 14px 40px;
+  background: #F2EDE3;
   border-top: 1px solid #D4CEBE;
+  z-index: 150;
 }
 
-footer p {
+#main-footer p {
+  font-size: 11px;
+  color: #6B6560;
+}
+
+/* =============================================
+   PHASE 3 — THANK YOU
+============================================= */
+
+#thank-you {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #F2EDE3;
+  z-index: 600;
+  overflow-y: auto;
+}
+
+/* grain on thank-you too */
+#thank-you::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E");
+  opacity: 0.048;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ty-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 32px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ty-heading {
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 52px;
+  color: #6B8C7E;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  line-height: 1.1;
+}
+
+.ty-body {
+  font-size: 16px;
+  color: #6B6560;
+  line-height: 1.7;
+  max-width: 400px;
+}
+
+.ty-divider {
+  width: 60px;
+  border: none;
+  border-top: 1px solid #D4CEBE;
+  margin: 32px auto;
+}
+
+.ty-blocks {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  justify-content: center;
+  text-align: left;
+}
+
+.ty-block {
+  max-width: 200px;
+}
+
+.ty-block strong {
+  display: block;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  color: #1C1917;
+  margin-bottom: 6px;
+}
+
+.ty-block p {
+  font-size: 13px;
+  color: #6B6560;
+  line-height: 1.6;
+}
+
+.ty-contact {
+  margin-top: 40px;
   font-size: 12px;
   color: #6B6560;
-  font-family: "Inter", sans-serif;
 }
 
-/* -----------------------------------------------
-   MOBILE  (max-width: 768px)
------------------------------------------------ */
+.ty-contact a {
+  color: #6B8C7E;
+  text-decoration: none;
+}
+
+.ty-contact a:hover {
+  text-decoration: underline;
+}
+
+/* =============================================
+   MOBILE
+============================================= */
+
 @media (max-width: 768px) {
-  /* Hide the canvas side entirely */
-  .hero-right {
-    display: none;
+  html, body {
+    overflow: hidden;
   }
 
-  .hero {
-    flex-direction: column;
+  #main-nav {
+    padding: 0 24px;
+    height: 56px;
   }
 
-  .hero-left {
-    width: 100%;
-    padding: 48px 28px 64px;
-    justify-content: flex-start;
-    padding-top: 80px; /* extra room below nav */
+  .hero-content {
+    padding: 100px 24px 80px;
+    align-items: flex-start;
   }
 
   .headline {
-    font-size: 44px;
-  }
-
-  .subheadline {
-    max-width: 100%;
+    font-size: 42px;
   }
 
   #signupForm {
     max-width: 100%;
   }
 
-  .success-msg {
+  .ty-blocks {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ty-block {
     max-width: 100%;
   }
 
-  nav {
-    padding: 0 28px;
+  .ty-content {
+    padding: 60px 24px;
+  }
+
+  .ty-heading {
+    font-size: 38px;
   }
 }
