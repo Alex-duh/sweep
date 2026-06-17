@@ -1,0 +1,282 @@
+/* -----------------------------------------------
+   SWEEP LANDING PAGE — style.css
+   Palette:
+     #F2EDE3  warm linen (bg)
+     #E8E2D5  card/canvas bg
+     #1C1917  warm charcoal (primary text)
+     #6B6560  secondary text
+     #6B8C7E  sage green accent
+     #4E7267  sage hover
+     #D4CEBE  border/divider
+   ----------------------------------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: #F2EDE3;
+  color: #1C1917;
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* -----------------------------------------------
+   NAV
+----------------------------------------------- */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 56px;
+  background-color: #F2EDE3;
+  border-bottom: 1px solid #D4CEBE;
+}
+
+.nav-wordmark {
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  font-size: 20px;
+  color: #1C1917;
+  letter-spacing: -0.01em;
+}
+
+.nav-logo {
+  display: block;
+  /* placeholder styling — will show real pixel art when dropped in */
+  image-rendering: pixelated;
+}
+
+/* -----------------------------------------------
+   HERO
+----------------------------------------------- */
+.hero {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  padding-top: 56px; /* offset fixed nav */
+}
+
+/* LEFT — content */
+.hero-left {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px 56px 64px 72px;
+}
+
+.label-early-access {
+  display: block;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #6B8C7E;
+  margin-bottom: 20px;
+}
+
+.headline {
+  font-family: "Playfair Display", serif;
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1.1;
+  color: #1C1917;
+  margin-bottom: 24px;
+}
+
+.subheadline {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #6B6560;
+  max-width: 400px;
+  margin-bottom: 40px;
+}
+
+/* -----------------------------------------------
+   FORM
+----------------------------------------------- */
+#signupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 360px;
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+#signupForm input[type="text"],
+#signupForm input[type="email"] {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #D4CEBE;
+  outline: none;
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  color: #1C1917;
+  padding: 10px 0;
+  transition: border-color 0.15s ease;
+  border-radius: 0; /* sharp */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#signupForm input[type="text"]::placeholder,
+#signupForm input[type="email"]::placeholder {
+  color: #6B6560;
+}
+
+#signupForm input[type="text"]:focus,
+#signupForm input[type="email"]:focus {
+  border-bottom-color: #6B8C7E;
+}
+
+#submitBtn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 24px;
+  background-color: #6B8C7E;
+  color: #ffffff;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  border-radius: 0; /* sharp corners */
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+}
+
+#submitBtn:hover {
+  background-color: #4E7267;
+}
+
+#submitBtn:active {
+  background-color: #3d5c52;
+}
+
+/* Error message */
+.error-msg {
+  font-size: 13px;
+  color: #c0392b;
+  margin-top: 10px;
+  min-height: 18px;
+  font-family: "Inter", sans-serif;
+}
+
+/* Success message — hidden until JS reveals it */
+.success-msg {
+  display: none;
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-size: 28px;
+  color: #6B8C7E;
+  text-align: center;
+  max-width: 360px;
+  padding: 20px 0;
+}
+
+/* Fine print below form */
+.fine-print {
+  font-size: 12px;
+  font-style: italic;
+  color: #6B6560;
+  margin-top: 16px;
+  font-family: "Inter", sans-serif;
+}
+
+/* RIGHT — canvas */
+.hero-right {
+  width: 50%;
+  position: relative;
+  background-color: #E8E2D5;
+  border-left: 1px solid #D4CEBE;
+  /* canvas will fill this container */
+  overflow: hidden;
+}
+
+#sweepCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* -----------------------------------------------
+   FOOTER
+----------------------------------------------- */
+footer {
+  text-align: center;
+  padding: 24px 40px;
+  background-color: #F2EDE3;
+  border-top: 1px solid #D4CEBE;
+}
+
+footer p {
+  font-size: 12px;
+  color: #6B6560;
+  font-family: "Inter", sans-serif;
+}
+
+/* -----------------------------------------------
+   MOBILE  (max-width: 768px)
+----------------------------------------------- */
+@media (max-width: 768px) {
+  /* Hide the canvas side entirely */
+  .hero-right {
+    display: none;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .hero-left {
+    width: 100%;
+    padding: 48px 28px 64px;
+    justify-content: flex-start;
+    padding-top: 80px; /* extra room below nav */
+  }
+
+  .headline {
+    font-size: 44px;
+  }
+
+  .subheadline {
+    max-width: 100%;
+  }
+
+  #signupForm {
+    max-width: 100%;
+  }
+
+  .success-msg {
+    max-width: 100%;
+  }
+
+  nav {
+    padding: 0 28px;
+  }
+}

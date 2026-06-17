@@ -70,11 +70,13 @@ SPAM_SENDER_DOMAINS = [
 # email from "BGSU Visit Team" is almost certainly college-related.
 COLLEGE_KEYWORDS = [
     "university", "college", "admissions", "admission", "campus",
-    "undergraduate", "enrollment", "applicant", "tuition", "degree",
-    "apply", "application", "academic", "scholarship", "major", "transfer",
-    # Campus-visit phrases kept only if college-specific enough for non-.edu senders.
-    # "open house" removed — real estate uses it too ("Open house this Sunday").
-    # "preview day" removed — too generic.
+    "undergraduate", "enrollment", "applicant", "tuition",
+    # Removed: "apply", "application", "academic", "scholarship", "major",
+    # "transfer", "degree" — all too broad. They appear in Pacsun promo copy,
+    # Grammarly marketing, LinkedIn alerts, UNIQLO ("MAJOR deals"), Taco Bell
+    # rewards ("transfer points"), etc. Every one of those was hitting Groq
+    # unnecessarily and returning "keep" at 100%. The remaining keywords are
+    # specific enough that no commercial non-college email uses them.
     "visit day", "campus tour", "tour campus", "information session",
     "class of", "freshman", "first-year", "student life",
 ]
