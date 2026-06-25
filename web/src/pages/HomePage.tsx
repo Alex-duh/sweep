@@ -15,15 +15,20 @@ export function HomePage() {
     e.preventDefault()
     if (!name.trim() || !email.trim()) return
     setStatus('sending')
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 10000)
     try {
       const res = await fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: email.trim() }),
+        signal: ctrl.signal,
       })
+      clearTimeout(timer)
       if (!res.ok) throw new Error('server error')
       setStatus('done')
     } catch {
+      clearTimeout(timer)
       setStatus('error')
     }
   }

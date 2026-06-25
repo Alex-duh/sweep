@@ -17,7 +17,7 @@ export function AboutPage() {
             <p>
               You circled in the bubble on your first AP test, agreeing to
               College Board emails thinking: <em>"what if Harvard actually
-              reaches out?"</em> What you got instead was tens of emails per
+              reaches out?"</em>{' '}What you got instead was tens of emails per
               day from schools you've never heard of, in states you've never
               visited, all insisting you're a "perfect fit." Every single day.
             </p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const WORDS = [
   'archive', 'sweep', 'recruitment', 'spam', 'inbox',
@@ -6,12 +6,25 @@ const WORDS = [
   'clean', 'filter', 'organize', 'declutter', 'remove',
 ]
 
-function TypewriterWord({ startIdx = 0 }: { startIdx?: number }) {
+function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
+  top: string
+  left: string
+  startIdx?: number
+  initialDelay?: number
+}) {
+  const [ready, setReady] = useState(initialDelay === 0)
   const [display, setDisplay] = useState('')
   const [wIdx, setWIdx] = useState(startIdx)
   const [typing, setTyping] = useState(true)
 
   useEffect(() => {
+    if (initialDelay === 0) return
+    const t = setTimeout(() => setReady(true), initialDelay)
+    return () => clearTimeout(t)
+  }, [initialDelay])
+
+  useEffect(() => {
+    if (!ready) return
     const word = WORDS[wIdx % WORDS.length]
     let t: ReturnType<typeof setTimeout>
 
@@ -31,46 +44,36 @@ function TypewriterWord({ startIdx = 0 }: { startIdx?: number }) {
     }
 
     return () => clearTimeout(t)
-  }, [display, typing, wIdx])
+  }, [display, typing, wIdx, ready])
 
   return (
-    <span className="text-stone-500 font-mono text-xs leading-7">
-      {display}<span className="opacity-50">_</span>
+    <span
+      style={{ position: 'absolute', top, left }}
+      className="font-mono text-[11px] text-stone-500 opacity-[0.18] leading-none whitespace-nowrap"
+    >
+      {display}
     </span>
   )
 }
 
 export function TypewriterBg() {
+  const positions = useMemo(() =>
+    Array.from({ length: 11 }, (_, i) => ({
+      top: `${8 + Math.random() * 78}%`,
+      left: `${3 + Math.random() * 85}%`,
+      startIdx: (i * 3) % WORDS.length,
+      initialDelay: i * 300,
+    })),
+  [])
+
   return (
     <div
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
       aria-hidden="true"
     >
-      {/* Top-right corner */}
-      <div className="absolute top-20 right-6 flex flex-col gap-1 items-end opacity-25">
-        <TypewriterWord startIdx={0} />
-        <TypewriterWord startIdx={3} />
-        <TypewriterWord startIdx={6} />
-      </div>
-
-      {/* Bottom-left corner */}
-      <div className="absolute bottom-20 left-6 flex flex-col gap-1 opacity-25">
-        <TypewriterWord startIdx={1} />
-        <TypewriterWord startIdx={4} />
-        <TypewriterWord startIdx={8} />
-      </div>
-
-      {/* Bottom-right corner */}
-      <div className="absolute bottom-20 right-6 flex flex-col gap-1 items-end opacity-20">
-        <TypewriterWord startIdx={2} />
-        <TypewriterWord startIdx={9} />
-      </div>
-
-      {/* Top-left corner */}
-      <div className="absolute top-20 left-6 flex flex-col gap-1 opacity-20">
-        <TypewriterWord startIdx={5} />
-        <TypewriterWord startIdx={12} />
-      </div>
+      {positions.map((p, i) => (
+        <TypewriterWord key={i} {...p} />
+      ))}
     </div>
   )
 }

@@ -13,15 +13,20 @@ export function ContactPage() {
     e.preventDefault()
     if (!subject.trim() || !message.trim()) return
     setStatus('sending')
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 10000)
     try {
       const res = await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject: subject.trim(), message: message.trim() }),
+        signal: ctrl.signal,
       })
+      clearTimeout(timer)
       if (!res.ok) throw new Error('server error')
       setStatus('sent')
     } catch {
+      clearTimeout(timer)
       setStatus('error')
     }
   }

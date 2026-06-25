@@ -15,18 +15,21 @@ export function PrivacyPage() {
           </h1>
           <div className="mt-8 space-y-5 text-base text-zinc-600 leading-relaxed">
             <p>
-              Sweep connects to Gmail using Google OAuth 2.0. You authorize
-              access; Google handles authentication. Sweep only reads your inbox
-              to identify recruitment messages — it never stores your emails or
-              shares anything.
+              Sweep is in early access. Here's exactly what we collect
+              and what we don't.
             </p>
             <p>
-              Your credentials stay on your device. When you close the session,
-              access ends.
+              When you join the waitlist, we store your name and email
+              address so we can reach you when access opens. Contact form
+              messages are stored to allow us to respond. That's the full
+              extent of it — no tracking, no ads, no third parties.
             </p>
             <p>
-              Sweep does not collect analytics, run ads, or share data with
-              third parties.
+              Sweep does not have access to your Gmail inbox in the current
+              version. When Gmail access launches, your emails will be read
+              only to identify recruitment messages and immediately
+              discarded. No email content, subject lines, or sender
+              information will ever be stored on our servers.
             </p>
           </div>
         </div>
