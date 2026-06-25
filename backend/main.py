@@ -46,11 +46,11 @@ async def startup():
         await db.commit()
 
 
-def notify(subject: str, body: str) -> None:
-    """Schedules a background email via Gmail SMTP. Never blocks the response."""
+async def notify(subject: str, body: str) -> None:
+    """Send email via Gmail SMTP. Awaited before response so it can't be killed by shutdown."""
     password = os.environ.get("GMAIL_APP_PASSWORD", "")
-
     if not password:
+        print("[notify] GMAIL_APP_PASSWORD not set — skipping email")
         return
 
     def _send() -> None:
@@ -58,22 +58,17 @@ def notify(subject: str, body: str) -> None:
         msg["Subject"] = subject
         msg["From"] = NOTIFY_EMAIL
         msg["To"] = NOTIFY_EMAIL
-        # Try port 587 (STARTTLS) — more reliable on cloud hosts than port 465
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
             smtp.ehlo()
             smtp.starttls()
             smtp.login(NOTIFY_EMAIL, password)
             smtp.send_message(msg)
+        print("[notify] email sent ok")
 
-    def _run() -> None:
-        try:
-            _send()
-            print("[notify] email sent ok")
-        except Exception as e:
-            print(f"[notify] SMTP failed: {e}")
-
-    # Fire-and-forget — don't block the HTTP response waiting for SMTP
-    asyncio.create_task(asyncio.to_thread(_run))
+    try:
+        await asyncio.wait_for(asyncio.to_thread(_send), timeout=12)
+    except Exception as e:
+        print(f"[notify] SMTP failed: {e}")
 
 
 class SignupRequest(BaseModel):
@@ -97,7 +92,7 @@ async def signup(req: SignupRequest):
         except sqlite3.IntegrityError:
             pass  # duplicate email — idempotent
 
-    notify(
+    await notify(
         subject=f"[Sweep] New waitlist signup: {req.name}",
         body=f"Name:  {req.name}\nEmail: {req.email}\nTime:  {timestamp}",
     )
@@ -131,7 +126,7 @@ async def contact(req: ContactRequest):
         )
         await db.commit()
 
-    notify(
+    await notify(
         subject=f"[Sweep] Contact: {req.subject}",
         body=f"Subject: {req.subject}\n\n{req.message}\n\nTime: {timestamp}",
     )
