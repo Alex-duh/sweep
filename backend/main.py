@@ -19,6 +19,11 @@ DB_PATH = "signups.db"
 NOTIFY_EMAIL = "da1.alexdu@gmail.com"
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 @app.on_event("startup")
 async def startup():
     async with aiosqlite.connect(DB_PATH) as db:

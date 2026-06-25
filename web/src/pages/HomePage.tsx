@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Nav } from '@/components/Nav'
@@ -10,6 +10,11 @@ export function HomePage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'slow' | 'done' | 'error'>('idle')
+
+  // Pre-warm Render backend on page load so it's awake by the time the user submits
+  useEffect(() => {
+    fetch(`${API_URL}/health`).catch(() => {})
+  }, [])
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
