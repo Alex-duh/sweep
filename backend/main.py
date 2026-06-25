@@ -1,10 +1,8 @@
 import asyncio
 import json
 import os
-import smtplib
 import sqlite3
 from datetime import datetime, timezone
-from email.mime.text import MIMEText
 
 import aiosqlite
 import httpx
@@ -47,28 +45,27 @@ async def startup():
 
 
 async def notify(subject: str, body: str) -> None:
-    """Send email via Gmail SMTP. Awaited before response so it can't be killed by shutdown."""
-    password = os.environ.get("GMAIL_APP_PASSWORD", "")
-    if not password:
-        print("[notify] GMAIL_APP_PASSWORD not set — skipping email")
+    """Send email via Resend API (HTTPS — works on Render free tier)."""
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        print("[notify] RESEND_API_KEY not set — skipping email")
         return
-
-    def _send() -> None:
-        msg = MIMEText(body, "plain")
-        msg["Subject"] = subject
-        msg["From"] = NOTIFY_EMAIL
-        msg["To"] = NOTIFY_EMAIL
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
-            smtp.ehlo()
-            smtp.starttls()
-            smtp.login(NOTIFY_EMAIL, password)
-            smtp.send_message(msg)
-        print("[notify] email sent ok")
-
     try:
-        await asyncio.wait_for(asyncio.to_thread(_send), timeout=12)
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "from": "Sweep <onboarding@resend.dev>",
+                    "to": [NOTIFY_EMAIL],
+                    "subject": subject,
+                    "text": body,
+                },
+            )
+            resp.raise_for_status()
+            print("[notify] email sent ok")
     except Exception as e:
-        print(f"[notify] SMTP failed: {e}")
+        print(f"[notify] Resend failed: {e}")
 
 
 class SignupRequest(BaseModel):
