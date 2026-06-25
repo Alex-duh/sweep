@@ -18,6 +18,7 @@ const PHRASES = [
 const N = 5
 
 type Phase = 'idle' | 'typing' | 'paused' | 'erasing'
+type Zone = 'top' | 'bottom' | 'left' | 'right'
 
 interface Slot {
   top: number
@@ -27,29 +28,47 @@ interface Slot {
   phase: Phase
 }
 
-function randomPos(others: Slot[]): [number, number] {
+// Place phrases in border zones, avoiding the center content area.
+// top/bottom strips span full width; left/right strips stay in the margins.
+function borderPos(zone: Zone | 'random', others: Slot[]): [number, number] {
+  const zones: Zone[] = ['top', 'bottom', 'left', 'right']
+  const z: Zone = zone === 'random' ? zones[Math.floor(Math.random() * 4)] : zone
   const occupied = others.filter(s => s.phase !== 'idle')
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const t = 10 + Math.random() * 72
-    const l = 5 + Math.random() * 68
-    const clash = occupied.some(
-      o => Math.abs(o.top - t) < 8 && Math.abs(o.left - l) < 22
-    )
+
+  for (let attempt = 0; attempt < 40; attempt++) {
+    let t: number, l: number
+    switch (z) {
+      case 'top':
+        t = 9 + Math.random() * 7    // 9–16% — just below nav
+        l = 5 + Math.random() * 76   // 5–81%
+        break
+      case 'bottom':
+        t = 81 + Math.random() * 9   // 81–90% — near footer
+        l = 5 + Math.random() * 76
+        break
+      case 'left':
+        t = 20 + Math.random() * 58  // 20–78% — avoid nav/footer
+        l = 1 + Math.random() * 14   // 1–15%
+        break
+      default: // right
+        t = 20 + Math.random() * 58
+        l = 62 + Math.random() * 14  // 62–76% — phrases extend rightward
+        break
+    }
+    const clash = occupied.some(o => Math.abs(o.top - t) < 7 && Math.abs(o.left - l) < 22)
     if (!clash) return [t, l]
   }
-  return [10 + Math.random() * 72, 5 + Math.random() * 68]
+  // fallback
+  return [9 + Math.random() * 7, 5 + Math.random() * 76]
 }
 
+// Init with one slot per zone so they're spread from the start
 function initSlots(): Slot[] {
+  const startZones: Zone[] = ['top', 'left', 'bottom', 'right', 'top']
   const result: Slot[] = []
   for (let i = 0; i < N; i++) {
-    const [top, left] = randomPos(result)
-    result.push({
-      top, left,
-      phraseIdx: (i * 3) % PHRASES.length,
-      display: '',
-      phase: 'idle',
-    })
+    const [top, left] = borderPos(startZones[i], result)
+    result.push({ top, left, phraseIdx: (i * 3) % PHRASES.length, display: '', phase: 'idle' })
   }
   return result
 }
@@ -76,11 +95,11 @@ export function TypewriterBg() {
         slot.display = slot.display.slice(0, -1)
         slot.phase = 'erasing'
         flush()
-        const t = setTimeout(() => eraseSlot(idx), 40)
-        timers.current.push(t)
+        timers.current.push(setTimeout(() => eraseSlot(idx), 40))
       } else {
-        // Teleport to a new non-overlapping position before going idle
-        const [newTop, newLeft] = randomPos(slotsRef.current.filter((_, i) => i !== idx))
+        // Teleport to a new border position before going idle
+        const others = slotsRef.current.filter((_, i) => i !== idx)
+        const [newTop, newLeft] = borderPos('random', others)
         slot.top = newTop
         slot.left = newLeft
         slot.phraseIdx = (slot.phraseIdx + 1) % PHRASES.length
@@ -97,15 +116,12 @@ export function TypewriterBg() {
         slot.display = phrase.slice(0, slot.display.length + 1)
         slot.phase = 'typing'
         flush()
-        const t = setTimeout(() => typeSlot(idx), 70 + Math.random() * 55)
-        timers.current.push(t)
+        timers.current.push(setTimeout(() => typeSlot(idx), 70 + Math.random() * 55))
       } else {
-        // Finished typing — pause, activate next slot, then erase
         slot.phase = 'paused'
         flush()
         scheduleNext(idx)
-        const t = setTimeout(() => eraseSlot(idx), 2400)
-        timers.current.push(t)
+        timers.current.push(setTimeout(() => eraseSlot(idx), 2400))
       }
     }
 
@@ -115,12 +131,10 @@ export function TypewriterBg() {
         if (slotsRef.current[nextIdx].phase === 'idle') {
           typeSlot(nextIdx)
         } else {
-          const t = setTimeout(tryActivate, 300)
-          timers.current.push(t)
+          timers.current.push(setTimeout(tryActivate, 300))
         }
       }
-      const t = setTimeout(tryActivate, 800)
-      timers.current.push(t)
+      timers.current.push(setTimeout(tryActivate, 800))
     }
 
     typeSlot(0)
@@ -136,7 +150,7 @@ export function TypewriterBg() {
         <span
           key={i}
           style={{ position: 'absolute', top: v.top, left: v.left }}
-          className="font-mono text-sm text-stone-500 opacity-[0.15] leading-none whitespace-nowrap"
+          className="font-mono text-sm text-stone-600 opacity-[0.28] leading-none whitespace-nowrap"
         >
           {v.display}
         </span>
