@@ -1,10 +1,13 @@
-import os
+import asyncio
 import json
+import os
+import smtplib
 import sqlite3
 from datetime import datetime, timezone
+from email.mime.text import MIMEText
 
-import httpx
 import aiosqlite
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,6 +16,7 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 DB_PATH = "signups.db"
+NOTIFY_EMAIL = "da1.alexdu@gmail.com"
 
 
 @app.on_event("startup")
@@ -26,7 +30,105 @@ async def startup():
                 timestamp TEXT
             )"""
         )
+        await db.execute(
+            """CREATE TABLE IF NOT EXISTS messages (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject   TEXT,
+                message   TEXT,
+                timestamp TEXT
+            )"""
+        )
         await db.commit()
+
+
+async def notify(subject: str, body: str) -> None:
+    """
+    Sends an email to NOTIFY_EMAIL via Gmail SMTP.
+    Reads the app password from GMAIL_APP_PASSWORD env var.
+    Fails silently if the env var is not set (local dev without credentials).
+    Runs in a thread so it doesn't block the async event loop.
+    """
+    password = os.environ.get("GMAIL_APP_PASSWORD", "")
+
+    if not password:
+        return
+
+    def _send() -> None:
+        msg = MIMEText(body, "plain")
+        msg["Subject"] = subject
+        msg["From"] = NOTIFY_EMAIL
+        msg["To"] = NOTIFY_EMAIL
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(NOTIFY_EMAIL, password)
+            smtp.send_message(msg)
+
+    try:
+        await asyncio.to_thread(_send)
+    except Exception as e:
+        # Log the error but never let a notification failure break the response.
+        print(f"[notify] SMTP failed: {e}")
+
+
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+
+
+@app.post("/signup")
+async def signup(req: SignupRequest):
+    if not req.email:
+        raise HTTPException(status_code=400, detail="email is required")
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        try:
+            await db.execute(
+                "INSERT INTO signups (name, email, timestamp) VALUES (?, ?, ?)",
+                (req.name, req.email, timestamp),
+            )
+            await db.commit()
+        except sqlite3.IntegrityError:
+            pass  # duplicate email — idempotent
+
+    await notify(
+        subject=f"[Sweep] New waitlist signup: {req.name}",
+        body=f"Name:  {req.name}\nEmail: {req.email}\nTime:  {timestamp}",
+    )
+    return {"success": True}
+
+
+@app.get("/signups")
+async def get_signups():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT name, email, timestamp FROM signups ORDER BY id") as cur:
+            rows = await cur.fetchall()
+    return {"signups": [dict(r) for r in rows]}
+
+
+class ContactRequest(BaseModel):
+    subject: str
+    message: str
+
+
+@app.post("/contact")
+async def contact(req: ContactRequest):
+    if not req.subject.strip() or not req.message.strip():
+        raise HTTPException(status_code=400, detail="subject and message are required")
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO messages (subject, message, timestamp) VALUES (?, ?, ?)",
+            (req.subject, req.message, timestamp),
+        )
+        await db.commit()
+
+    await notify(
+        subject=f"[Sweep] Contact: {req.subject}",
+        body=f"Subject: {req.subject}\n\n{req.message}\n\nTime: {timestamp}",
+    )
+    return {"success": True}
 
 
 class ClassifyRequest(BaseModel):
@@ -41,7 +143,6 @@ async def classify(req: ClassifyRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail={"error": "GROQ_API_KEY not configured"})
 
-    sender, subject, body_preview = req.sender, req.subject, req.body_preview
     prompt = f"""You are helping a user clean their inbox of college recruitment spam.
 
 Classify this email as "recruitment" or "keep":
@@ -49,17 +150,17 @@ Classify this email as "recruitment" or "keep":
 "recruitment" means: a mass outreach email from a college/university trying to get the user to apply, visit campus, or explore the school. Generic greeting, no specific application context.
 
 "keep" means: anything that is NOT college recruitment — including:
-  - Commercial or subscription emails (e.g. "try our premium service", research platforms, paper alerts)
+  - Commercial or subscription emails
   - Personal emails from a real individual
   - Post-application emails (acceptances, decisions, financial aid)
   - Newsletters or digests not about recruiting the user to apply
 
-Key rule: the sender having a .edu domain does NOT make it recruitment. Academia.edu, ResearchGate, and similar platforms have .edu domains but are commercial services, not colleges recruiting applicants.
+Key rule: the sender having a .edu domain does NOT make it recruitment.
 
 Email:
-Sender: {sender}
-Subject: {subject}
-Body preview: {body_preview}
+Sender: {req.sender}
+Subject: {req.subject}
+Body preview: {req.body_preview}
 
 Reply with ONLY this JSON and nothing else:
 {{"label": "recruitment" or "keep", "confidence": 0.0 to 1.0}}"""
@@ -81,34 +182,3 @@ Reply with ONLY this JSON and nothing else:
             return {"label": result["label"], "confidence": float(result["confidence"])}
     except Exception:
         return {"label": "keep", "confidence": 0.0}
-
-
-class SignupRequest(BaseModel):
-    name: str
-    email: str
-
-
-@app.post("/signup")
-async def signup(req: SignupRequest):
-    if not req.email:
-        raise HTTPException(status_code=400, detail="email is required")
-    timestamp = datetime.now(timezone.utc).isoformat()
-    async with aiosqlite.connect(DB_PATH) as db:
-        try:
-            await db.execute(
-                "INSERT INTO signups (name, email, timestamp) VALUES (?, ?, ?)",
-                (req.name, req.email, timestamp),
-            )
-            await db.commit()
-        except sqlite3.IntegrityError:
-            pass  # duplicate email — idempotent
-    return {"success": True}
-
-
-@app.get("/signups")
-async def get_signups():
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute("SELECT name, email, timestamp FROM signups ORDER BY id") as cur:
-            rows = await cur.fetchall()
-    return {"signups": [dict(r) for r in rows]}
