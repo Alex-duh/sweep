@@ -2,8 +2,6 @@
 
 A Python CLI tool that scans your Gmail inbox, identifies college recruitment spam using a tiered rule + AI classifier, and archives it — without ever deleting a single email.
 
-Built as an AP CS A final project.
-
 ---
 
 ## What it does
