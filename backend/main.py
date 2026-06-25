@@ -46,13 +46,8 @@ async def startup():
         await db.commit()
 
 
-async def notify(subject: str, body: str) -> None:
-    """
-    Sends an email to NOTIFY_EMAIL via Gmail SMTP.
-    Reads the app password from GMAIL_APP_PASSWORD env var.
-    Fails silently if the env var is not set (local dev without credentials).
-    Runs in a thread so it doesn't block the async event loop.
-    """
+def notify(subject: str, body: str) -> None:
+    """Schedules a background email via Gmail SMTP. Never blocks the response."""
     password = os.environ.get("GMAIL_APP_PASSWORD", "")
 
     if not password:
@@ -63,15 +58,19 @@ async def notify(subject: str, body: str) -> None:
         msg["Subject"] = subject
         msg["From"] = NOTIFY_EMAIL
         msg["To"] = NOTIFY_EMAIL
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        # timeout=10 so a blocked SMTP port fails fast instead of hanging forever
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
             smtp.login(NOTIFY_EMAIL, password)
             smtp.send_message(msg)
 
-    try:
-        await asyncio.to_thread(_send)
-    except Exception as e:
-        # Log the error but never let a notification failure break the response.
-        print(f"[notify] SMTP failed: {e}")
+    def _run() -> None:
+        try:
+            _send()
+        except Exception as e:
+            print(f"[notify] SMTP failed: {e}")
+
+    # Fire-and-forget — don't block the HTTP response waiting for SMTP
+    asyncio.create_task(asyncio.to_thread(_run))
 
 
 class SignupRequest(BaseModel):
@@ -95,7 +94,7 @@ async def signup(req: SignupRequest):
         except sqlite3.IntegrityError:
             pass  # duplicate email — idempotent
 
-    await notify(
+    notify(
         subject=f"[Sweep] New waitlist signup: {req.name}",
         body=f"Name:  {req.name}\nEmail: {req.email}\nTime:  {timestamp}",
     )
@@ -129,7 +128,7 @@ async def contact(req: ContactRequest):
         )
         await db.commit()
 
-    await notify(
+    notify(
         subject=f"[Sweep] Contact: {req.subject}",
         body=f"Subject: {req.subject}\n\n{req.message}\n\nTime: {timestamp}",
     )
