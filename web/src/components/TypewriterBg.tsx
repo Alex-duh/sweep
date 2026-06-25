@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const WORDS = [
-  'archive', 'sweep', 'recruitment', 'spam', 'inbox',
-  'admissions', 'outreach', 'enrollment', 'unsubscribe', 'college',
-  'clean', 'filter', 'organize', 'declutter', 'remove',
+const PHRASES = [
+  '"Explore your future at Northeastern!"',
+  '"Students like you belong here."',
+  '"Visit our campus this fall — RSVP now"',
+  '"We noticed your PSAT scores, Alex."',
+  '"Your profile caught our attention."',
+  '"Apply now — rolling admissions open"',
+  '"You\'ve been selected for early review."',
+  '"Discover your potential with us."',
+  '"Open house this November — register free"',
+  '"We think you\'d thrive here."',
+  '"Schedule a campus tour today!"',
+  '"A place where you truly belong."',
 ]
 
 function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
@@ -25,18 +34,18 @@ function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
 
   useEffect(() => {
     if (!ready) return
-    const word = WORDS[wIdx % WORDS.length]
+    const phrase = PHRASES[wIdx % PHRASES.length]
     let t: ReturnType<typeof setTimeout>
 
     if (typing) {
-      if (display.length < word.length) {
-        t = setTimeout(() => setDisplay(word.slice(0, display.length + 1)), 110 + Math.random() * 70)
+      if (display.length < phrase.length) {
+        t = setTimeout(() => setDisplay(phrase.slice(0, display.length + 1)), 75 + Math.random() * 50)
       } else {
-        t = setTimeout(() => setTyping(false), 1800)
+        t = setTimeout(() => setTyping(false), 2400)
       }
     } else {
       if (display.length > 0) {
-        t = setTimeout(() => setDisplay(d => d.slice(0, -1)), 65)
+        t = setTimeout(() => setDisplay(d => d.slice(0, -1)), 40)
       } else {
         setWIdx(w => w + 1)
         setTyping(true)
@@ -49,7 +58,7 @@ function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
   return (
     <span
       style={{ position: 'absolute', top, left }}
-      className="font-mono text-[11px] text-stone-500 opacity-[0.18] leading-none whitespace-nowrap"
+      className="font-mono text-sm text-stone-500 opacity-[0.15] leading-none whitespace-nowrap"
     >
       {display}
     </span>
@@ -58,11 +67,11 @@ function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
 
 export function TypewriterBg() {
   const positions = useMemo(() =>
-    Array.from({ length: 11 }, (_, i) => ({
-      top: `${8 + Math.random() * 78}%`,
-      left: `${3 + Math.random() * 85}%`,
-      startIdx: (i * 3) % WORDS.length,
-      initialDelay: i * 300,
+    Array.from({ length: 6 }, (_, i) => ({
+      top: `${12 + Math.random() * 70}%`,
+      left: `${2 + Math.random() * 80}%`,
+      startIdx: (i * 2) % PHRASES.length,
+      initialDelay: i * 500,
     })),
   [])
 
