@@ -58,14 +58,17 @@ def notify(subject: str, body: str) -> None:
         msg["Subject"] = subject
         msg["From"] = NOTIFY_EMAIL
         msg["To"] = NOTIFY_EMAIL
-        # timeout=10 so a blocked SMTP port fails fast instead of hanging forever
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
+        # Try port 587 (STARTTLS) — more reliable on cloud hosts than port 465
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
             smtp.login(NOTIFY_EMAIL, password)
             smtp.send_message(msg)
 
     def _run() -> None:
         try:
             _send()
+            print("[notify] email sent ok")
         except Exception as e:
             print(f"[notify] SMTP failed: {e}")
 
