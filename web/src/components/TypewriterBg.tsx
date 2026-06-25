@@ -4,7 +4,7 @@ const PHRASES = [
   '"Explore your future at Northeastern!"',
   '"Students like you belong here."',
   '"Visit our campus this fall — RSVP now"',
-  '"We noticed your PSAT scores, Alex."',
+  '"We noticed your PSAT scores."',
   '"Your profile caught our attention."',
   '"Apply now — rolling admissions open"',
   '"You\'ve been selected for early review."',
@@ -13,6 +13,12 @@ const PHRASES = [
   '"We think you\'d thrive here."',
   '"Schedule a campus tour today!"',
   '"A place where you truly belong."',
+]
+
+// 3 columns × 2 rows — one phrase guaranteed per zone, jitter keeps it random-feeling
+const GRID = [
+  { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 },
+  { col: 0, row: 1 }, { col: 1, row: 1 }, { col: 2, row: 1 },
 ]
 
 function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
@@ -67,11 +73,11 @@ function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
 
 export function TypewriterBg() {
   const positions = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => ({
-      top: `${12 + Math.random() * 70}%`,
-      left: `${2 + Math.random() * 80}%`,
+    GRID.map(({ col, row }, i) => ({
+      top: `${18 + row * 44 + (Math.random() - 0.5) * 18}%`,
+      left: `${6 + col * 30 + (Math.random() - 0.5) * 14}%`,
       startIdx: (i * 2) % PHRASES.length,
-      initialDelay: i * 500,
+      initialDelay: i * 600,
     })),
   [])
 
