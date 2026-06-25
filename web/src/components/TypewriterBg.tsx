@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const PHRASES = [
   '"Explore your future at Northeastern!"',
@@ -15,79 +15,131 @@ const PHRASES = [
   '"A place where you truly belong."',
 ]
 
-// 3 columns × 2 rows — one phrase guaranteed per zone, jitter keeps it random-feeling
-const GRID = [
-  { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 },
-  { col: 0, row: 1 }, { col: 1, row: 1 }, { col: 2, row: 1 },
-]
+const N = 5
 
-function TypewriterWord({ top, left, startIdx = 0, initialDelay = 0 }: {
-  top: string
-  left: string
-  startIdx?: number
-  initialDelay?: number
-}) {
-  const [ready, setReady] = useState(initialDelay === 0)
-  const [display, setDisplay] = useState('')
-  const [wIdx, setWIdx] = useState(startIdx)
-  const [typing, setTyping] = useState(true)
+type Phase = 'idle' | 'typing' | 'paused' | 'erasing'
 
-  useEffect(() => {
-    if (initialDelay === 0) return
-    const t = setTimeout(() => setReady(true), initialDelay)
-    return () => clearTimeout(t)
-  }, [initialDelay])
+interface Slot {
+  top: number
+  left: number
+  phraseIdx: number
+  display: string
+  phase: Phase
+}
 
-  useEffect(() => {
-    if (!ready) return
-    const phrase = PHRASES[wIdx % PHRASES.length]
-    let t: ReturnType<typeof setTimeout>
+function randomPos(others: Slot[]): [number, number] {
+  const occupied = others.filter(s => s.phase !== 'idle')
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const t = 10 + Math.random() * 72
+    const l = 5 + Math.random() * 68
+    const clash = occupied.some(
+      o => Math.abs(o.top - t) < 8 && Math.abs(o.left - l) < 22
+    )
+    if (!clash) return [t, l]
+  }
+  return [10 + Math.random() * 72, 5 + Math.random() * 68]
+}
 
-    if (typing) {
-      if (display.length < phrase.length) {
-        t = setTimeout(() => setDisplay(phrase.slice(0, display.length + 1)), 75 + Math.random() * 50)
-      } else {
-        t = setTimeout(() => setTyping(false), 2400)
-      }
-    } else {
-      if (display.length > 0) {
-        t = setTimeout(() => setDisplay(d => d.slice(0, -1)), 40)
-      } else {
-        setWIdx(w => w + 1)
-        setTyping(true)
-      }
-    }
-
-    return () => clearTimeout(t)
-  }, [display, typing, wIdx, ready])
-
-  return (
-    <span
-      style={{ position: 'absolute', top, left }}
-      className="font-mono text-sm text-stone-500 opacity-[0.15] leading-none whitespace-nowrap"
-    >
-      {display}
-    </span>
-  )
+function initSlots(): Slot[] {
+  const result: Slot[] = []
+  for (let i = 0; i < N; i++) {
+    const [top, left] = randomPos(result)
+    result.push({
+      top, left,
+      phraseIdx: (i * 3) % PHRASES.length,
+      display: '',
+      phase: 'idle',
+    })
+  }
+  return result
 }
 
 export function TypewriterBg() {
-  const positions = useMemo(() =>
-    GRID.map(({ col, row }, i) => ({
-      top: `${18 + row * 44 + (Math.random() - 0.5) * 18}%`,
-      left: `${6 + col * 30 + (Math.random() - 0.5) * 14}%`,
-      startIdx: (i * 2) % PHRASES.length,
-      initialDelay: i * 600,
-    })),
-  [])
+  const slotsRef = useRef<Slot[]>(initSlots())
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const [visuals, setVisuals] = useState(() =>
+    slotsRef.current.map(s => ({ top: `${s.top}%`, left: `${s.left}%`, display: '' }))
+  )
+
+  useEffect(() => {
+    function flush() {
+      setVisuals(slotsRef.current.map(s => ({
+        top: `${s.top}%`,
+        left: `${s.left}%`,
+        display: s.display,
+      })))
+    }
+
+    function eraseSlot(idx: number) {
+      const slot = slotsRef.current[idx]
+      if (slot.display.length > 0) {
+        slot.display = slot.display.slice(0, -1)
+        slot.phase = 'erasing'
+        flush()
+        const t = setTimeout(() => eraseSlot(idx), 40)
+        timers.current.push(t)
+      } else {
+        // Teleport to a new non-overlapping position before going idle
+        const [newTop, newLeft] = randomPos(slotsRef.current.filter((_, i) => i !== idx))
+        slot.top = newTop
+        slot.left = newLeft
+        slot.phraseIdx = (slot.phraseIdx + 1) % PHRASES.length
+        slot.phase = 'idle'
+        flush()
+      }
+    }
+
+    function typeSlot(idx: number) {
+      const slot = slotsRef.current[idx]
+      const phrase = PHRASES[slot.phraseIdx]
+
+      if (slot.display.length < phrase.length) {
+        slot.display = phrase.slice(0, slot.display.length + 1)
+        slot.phase = 'typing'
+        flush()
+        const t = setTimeout(() => typeSlot(idx), 70 + Math.random() * 55)
+        timers.current.push(t)
+      } else {
+        // Finished typing — pause, activate next slot, then erase
+        slot.phase = 'paused'
+        flush()
+        scheduleNext(idx)
+        const t = setTimeout(() => eraseSlot(idx), 2400)
+        timers.current.push(t)
+      }
+    }
+
+    function scheduleNext(currentIdx: number) {
+      const nextIdx = (currentIdx + 1) % N
+      function tryActivate() {
+        if (slotsRef.current[nextIdx].phase === 'idle') {
+          typeSlot(nextIdx)
+        } else {
+          const t = setTimeout(tryActivate, 300)
+          timers.current.push(t)
+        }
+      }
+      const t = setTimeout(tryActivate, 800)
+      timers.current.push(t)
+    }
+
+    typeSlot(0)
+    return () => { timers.current.forEach(clearTimeout) }
+  }, [])
 
   return (
     <div
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
       aria-hidden="true"
     >
-      {positions.map((p, i) => (
-        <TypewriterWord key={i} {...p} />
+      {visuals.map((v, i) => (
+        <span
+          key={i}
+          style={{ position: 'absolute', top: v.top, left: v.left }}
+          className="font-mono text-sm text-stone-500 opacity-[0.15] leading-none whitespace-nowrap"
+        >
+          {v.display}
+        </span>
       ))}
     </div>
   )

@@ -7,14 +7,15 @@ import { API_URL } from '@/lib/api'
 export function ContactPage() {
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'slow' | 'sent' | 'error'>('idle')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!subject.trim() || !message.trim()) return
     setStatus('sending')
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 10000)
+    const slowTimer = setTimeout(() => setStatus('slow'), 5000)
+    const abortTimer = setTimeout(() => ctrl.abort(), 60000)
     try {
       const res = await fetch(`${API_URL}/contact`, {
         method: 'POST',
@@ -22,11 +23,13 @@ export function ContactPage() {
         body: JSON.stringify({ subject: subject.trim(), message: message.trim() }),
         signal: ctrl.signal,
       })
-      clearTimeout(timer)
+      clearTimeout(slowTimer)
+      clearTimeout(abortTimer)
       if (!res.ok) throw new Error('server error')
       setStatus('sent')
     } catch {
-      clearTimeout(timer)
+      clearTimeout(slowTimer)
+      clearTimeout(abortTimer)
       setStatus('error')
     }
   }
@@ -79,9 +82,12 @@ export function ContactPage() {
               {status === 'error' && (
                 <p className="text-xs text-red-500">Something went wrong — try again.</p>
               )}
-              <Button type="submit" size="lg" disabled={status === 'sending'}>
-                {status === 'sending' ? 'Sending…' : 'Send message'}
+              <Button type="submit" size="lg" disabled={status === 'sending' || status === 'slow'}>
+                {status === 'slow' ? 'Waking up server…' : status === 'sending' ? 'Sending…' : 'Send message'}
               </Button>
+              {status === 'slow' && (
+                <p className="text-xs text-zinc-400">Server was asleep — this takes up to 30 seconds on first use.</p>
+              )}
             </form>
           )}
         </div>

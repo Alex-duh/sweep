@@ -9,14 +9,16 @@ import { API_URL } from '@/lib/api'
 export function HomePage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'slow' | 'done' | 'error'>('idle')
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !email.trim()) return
     setStatus('sending')
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 10000)
+    // Render free tier cold-starts take up to 60s — show a "slow" message at 5s
+    const slowTimer = setTimeout(() => setStatus('slow'), 5000)
+    const abortTimer = setTimeout(() => ctrl.abort(), 60000)
     try {
       const res = await fetch(`${API_URL}/signup`, {
         method: 'POST',
@@ -24,11 +26,13 @@ export function HomePage() {
         body: JSON.stringify({ name: name.trim(), email: email.trim() }),
         signal: ctrl.signal,
       })
-      clearTimeout(timer)
+      clearTimeout(slowTimer)
+      clearTimeout(abortTimer)
       if (!res.ok) throw new Error('server error')
       setStatus('done')
     } catch {
-      clearTimeout(timer)
+      clearTimeout(slowTimer)
+      clearTimeout(abortTimer)
       setStatus('error')
     }
   }
@@ -85,9 +89,12 @@ export function HomePage() {
                 {status === 'error' && (
                   <p className="text-xs text-red-500 text-left">Something went wrong — try again.</p>
                 )}
-                <Button type="submit" size="lg" className="w-full" disabled={status === 'sending'}>
-                  {status === 'sending' ? 'Joining…' : 'Join the waitlist →'}
+                <Button type="submit" size="lg" className="w-full" disabled={status === 'sending' || status === 'slow'}>
+                  {status === 'slow' ? 'Waking up server…' : status === 'sending' ? 'Joining…' : 'Join the waitlist →'}
                 </Button>
+                {status === 'slow' && (
+                  <p className="text-xs text-zinc-400 text-left">Server was asleep — this takes up to 30 seconds on first use.</p>
+                )}
                 <p className="text-xs text-zinc-400">
                   Archive only — nothing is ever deleted.
                 </p>
